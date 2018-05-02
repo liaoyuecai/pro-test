@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from scrapy.spider import Spider
 from scrapy.selector import Selector
-# from tutorial.items import DmozItem
+from tutorial.items import DmozItem
 import scrapy
 
 
@@ -29,8 +29,13 @@ class CnblogSpider(Spider):
 
     # 内容页抓取
     def parse_content(self, response):
+        img = response.xpath(".//img[@class='avatar_pic']//@src").extract()
+        item = DmozItem()
+        item['image_urls'] = img
+        print(img)
         print(response.xpath(".//h6[@class='title-article']//text()").extract_first())
         str = ''
         for s in response.xpath(".//div[@class='htmledit_views']//text()").extract():
             str += s
         print(str)
+        yield item
