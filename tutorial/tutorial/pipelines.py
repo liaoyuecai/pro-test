@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import scrapy
-from scrapy.contrib.pipeline.images import ImagesPipeline
+from scrapy.pipelines.images import ImagesPipeline
 # Define your item pipelines here
 #
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
@@ -25,13 +25,13 @@ class TutorialPipeline(ImagesPipeline):
         # item['image_paths'] = image_paths
         return item
 
-    def file_path(self, request, response=None, info=None):
-        item = request.meta['item']
-        url = request.url
-        image_guid = request.url.split('/')[-1]
-        prefix = image_guid.split('.')[0]
-        suffix = image_guid.split('.')[1]
-        prefix = bytes(self.number) + "/" + prefix
-        self.number += 1
-        # filename = u'full/{0[mote_id]}/{1}'.format(item, image_guid)
-        return prefix + '.' + suffix
+    # def file_path(self, request, response=None, info=None):
+    #     item = request.meta['item']
+    #     url = request.url
+    #     image_guid = request.url.split('/')[-1]
+    #     prefix = image_guid.split('.')[0]
+    #     suffix = image_guid.split('.')[1]
+    #     prefix = bytes(self.number) + "/" + prefix
+    #     self.number += 1
+    #     # filename = u'full/{0[mote_id]}/{1}'.format(item, image_guid)
+    #     return prefix + '.' + suffix
