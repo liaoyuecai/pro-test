@@ -82,7 +82,6 @@ class Frame(Object):
 
 # 图层
 class Coverage(Object):
-    background = None
 
     def __init__(self, name):
         super(Coverage, self).__init__()
