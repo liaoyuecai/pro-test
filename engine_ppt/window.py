@@ -5,15 +5,24 @@ import sys
 import cPickle as pickle
 from data import *
 
-from PyQt4 import QtGui, QtCore
+from PyQt4.QtGui import *
+from PyQt4.QtCore import *
 
 
-class Window(QtGui.QMainWindow):
+class Window(QMainWindow):
     filePath = None
+
+    currentTimeAxis = 1
+    currentTimerShaft = gameData.getChild(0)
+    sumTimeAxis = None
+    showTimeAxis = None
 
     def __init__(self):
         super(Window, self).__init__()
-        QtCore.QTextCodec.setCodecForCStrings(QtCore.QTextCodec.codecForName("utf-8"))
+        QTextCodec.setCodecForCStrings(QTextCodec.codecForName("utf-8"))
+        # btn =  QPushButton('111',self)
+        # btn.showMenu()
+
 
     def initMenu(self):
         # textEdit = QtGui.QTextEdit()
@@ -25,29 +34,57 @@ class Window(QtGui.QMainWindow):
         # exitAction.triggered.connect(self.close)
         #
         # self.statusBar()
-
+        # 菜单
         menubar = self.menuBar()
         fileMenu = menubar.addMenu('文件')
-        saveAction = QtGui.QAction('保存', self)
-        fileMenu.addAction(saveAction)
-        fileMenu.triggered.connect(self.saveFile)
+        fileMenu.addAction('保存', self.saveFile)
 
-        # fileMenu = menubar.addMenu('&File')
-        # fileMenu.addAction(exitAction)
-        #
-        # toolbar = self.addToolBar('Exit')
-        # toolbar.addAction(exitAction)
+        # 工具栏
+        toolbar = self.addToolBar('tool')
+        self.sumTimeAxis = toolbar.addAction(('时间轴(' + bytes(gameData.getChildrenLen()) + ')：'))
+        toolbar.addAction(QIcon('2.bmp'), '前进', self._leftTimeAxis)
+        self.showTimeAxis = toolbar.addAction((bytes(self.currentTimeAxis) + '(' + self.currentTimerShaft.name + ')'))
+        toolbar.addAction(QIcon('2.bmp'), '后退', self._rightTimeAxis)
+        toolbar.addAction('选择时间轴', self.choseTimeAxis)
 
-        self.setGeometry(300, 300, 350, 250)
-        self.setWindowTitle('Main window')
+
+        self.setGeometry(0, 0, 800, 800)
+        self.setWindowTitle('engine ppt')
+        self.center()
         self.show()
+
+    def _leftTimeAxis(self):
+        if self.currentTimeAxis > 1:
+            self.currentTimeAxis -= 1
+            self.showTimeAxis.setText(bytes(self.currentTimeAxis))
+            self.currentTimerShaft = gameData.getChild((self.currentTimeAxis - 1))
+
+    def _rightTimeAxis(self):
+        if self.currentTimeAxis < gameData.getChildrenLen():
+            self.currentTimeAxis += 1
+            self.showTimeAxis.setText(bytes(self.currentTimeAxis))
+            self.currentTimerShaft = gameData.getChild((self.currentTimeAxis - 1))
+
+    def choseTimeAxis(self):
+        cl_win = QDialog(self)
+        cl_win.resize(200, 200)
+        grid = QGridLayout()
+        btn = QPushButton('111', cl_win)
+        btn.showMenu()
+        grid.addWidget(btn, 1, 0, 1, 1)
+        cl_win.setLayout(grid)
+        cl_win.setWindowTitle('main windows')
+        cl_win.exec_()
+
+
 
     def initBody(self):
         pass
-        # timer = QtCore.QTimer()
-        # timer.setInterval(1000)
-        # timer.start()
-        # QtCore.QObject.connect(timer, QtCore.SIGNAL("timeout()"), win, QtCore.SLOT("update()"))
+
+    def center(self):  # 主窗口居中显示函数
+        screen = QDesktopWidget().screenGeometry()
+        size = self.geometry()
+        self.move((screen.width() - size.width()) / 2, (screen.height() - size.height()) / 2)
 
     def saveFile(self):
         if self.filePath:
@@ -64,14 +101,19 @@ class Window(QtGui.QMainWindow):
         # pickle.dump(summer, file)
 
     def getSaveFileName(self):
-        filename = QtGui.QFileDialog.getSaveFileName(self, "Save File", '', '.ds')
+        filename = QFileDialog.getSaveFileName(self, "Save File", '', '.ds')
         return filename
 
 
+
 def main():
-    app = QtGui.QApplication(sys.argv)
+    app = QApplication(sys.argv)
     win = Window()
     win.initMenu()
+    timer = QTimer()
+    timer.setInterval(11)
+    timer.start()
+    QObject.connect(timer, SIGNAL("timeout()"), win, SLOT("update()"))
     sys.exit(app.exec_())
 
 

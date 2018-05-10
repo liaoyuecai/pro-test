@@ -32,15 +32,23 @@ class Object(object):
         for i in range(sequence, len(self.list)):
             self.list[i].sequence -= 1
 
+    def getChild(self, seq):
+        return self.list[seq]
+
+    def getChildren(self):
+        return self.list
+
+    def getChildrenLen(self):
+        return len(self.list)
+
 
 class GameData(Object):
-    title = None
     seq = 1
 
     def __init__(self):
         super(GameData, self).__init__()
         timerShaftName = '未命名' + bytes(self.seq)
-        self.list.append(timerShaftName)
+        self.list.append(TimerShaft(timerShaftName))
 
     def addChild(self, childName=None):
         if childName:
@@ -64,7 +72,7 @@ class TimerShaft(Object):
 
     def __init__(self, name):
         super(TimerShaft, self).__init__()
-        self.name = name
+        self._name = name
 
 
 # 帧
