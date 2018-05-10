@@ -1,14 +1,46 @@
 # -*- coding: UTF8 -*-
-from PyQt4 import QtGui, QtCore
 import sys
 
+from PyQt4 import QtGui, QtCore
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
 
-class CanvasWidget(QtGui.QWidget):
+list = [];
+
+
+class pic(object):
+    x = 0;
+    y = 0;
+    img = None
+
+    def __init__(self):
+        super(self).__init__()
+
+    def show(self, x, y, url):
+        self.x = x
+        self.y = y
+        image = QtGui.QImage()
+        image.load(url)
+        self.img = image
+
+
+class CanvasWidget(QtGui.QMainWindow):
+    x = 0
+    y = 0
+
     def __init__(self):
         super(CanvasWidget, self).__init__()
+        self.setMouseTracking(True)
+        # self.statusBar().showMessage('Ready')
 
     def paintEvent(self, event):
+        # timer = QtCore.QTimer()
+        # timer.setInterval(1000)
+        # timer.start()
+        # QtCore.QObject.connect(timer, QtCore.SIGNAL("timeout()"), self, QtCore.SLOT("update()"))
+
         canvas = QtGui.QPainter()
+        list.append(canvas)
         # 开始绘图
         canvas.begin(icon)
         # 擦除给定矩形内的区域
@@ -24,13 +56,18 @@ class CanvasWidget(QtGui.QWidget):
         # （sx，sy）缩放坐标系。
         # canvas.scale(1, 1)
         image = QtGui.QImage()
-        image.load('2.bmp')
+        f = open('2.bmp', "rb")
+        data = f.read()
+        f.close()
+        image.loadFromData(data)
+        # image.load('2.bmp')
         # 旋转
         canvas.rotate(30)
         # （x，y）指定要绘制的绘画设备中的左上角点。（sx，sy）指定要绘制的图像中的左上角点。默认值是（0，0）。（sw，sh）指定要绘制的图像的大小。默认值（0，0）（和负值）表示一直到图像的右下角。
-        canvas.drawImage(50, 50, image, 0, 0, 100, 100)
+        canvas.drawImage(self.x, self.y, image, 0, 0, 100, 100)
         # 结束绘画。释放绘画时使用的任何资源。因为它被析构函数调用，所以通常不需要调用它。
-        canvas.end()
+        # self.update()
+        # canvas.end()
 
         wordpad = QtGui.QPainter()
         # 开始写字
@@ -40,7 +77,7 @@ class CanvasWidget(QtGui.QWidget):
         colorObj.setNamedColor('#000000')
         pen.setColor(colorObj)
 
-        #解决中文乱码问题
+        # 解决中文乱码问题
         # QtCore.QTextCodec.setCodecForTr(QtCore.QTextCodec.codecForName("utf-8"))
         QtCore.QTextCodec.setCodecForCStrings(QtCore.QTextCodec.codecForName("utf-8"))
         # QtCore.QTextCodec.setCodecForLocale(QtCore.QTextCodec.codecForName("utf-8"))
@@ -59,9 +96,79 @@ class CanvasWidget(QtGui.QWidget):
         wordpad.drawText(10, 10, 150, 50, QtCore.Qt.AlignCenter, 'aadds')
         # 结束写字
         wordpad.end()
+        self.x += 1
+        self.y += 1
+
+    def mousePressEvent(self, event):
+        # image = QtGui.QImage()
+        # image.load('3.bmp')
+        # list[0].eraseRect(50, 50, 50, 50)
+        # list[0].drawImage(50, 50, image, 0, 0, 50, 50)
+        button = event.button()
+        if button == 1:
+            print('点击左键')
+            self.drawPoints(event.globalX(), event.globalY(), '#000000', 1)
+        elif button == 2:
+            print('点击右键')
+
+    def mouseMoveEvent(self, event):
+        pass
+
+    def mouseReleaseEvent(self, event):
+        pass
+
+    def wheelEvent(self, event):
+        # -120向上 120向下
+        button = event.delta()
+        print(button)
+        # if button == 1:
+        #     print('点击左键')
+        # elif button == 2:
+        #     print('点击右键')
+
+    def drawPoints(self, x, y, color, size):
+        qp = QPainter()
+        qp.begin(self)
+        pen = QtGui.QPen()
+        colorObj = QtGui.QColor()
+        colorObj.setNamedColor(color)
+        pen.setColor(colorObj)
+        pen.setWidth(size)
+        qp.setPen(pen)
+        qp.drawPoint(x, y)
+        qp.end()
+
+    def drawLines(self, start_x, start_y, end_x, end_y, color, size):  #######画线
+        qp = QPainter()
+        qp.begin(self)
+        pen = QtGui.QPen()
+        colorObj = QtGui.QColor()
+        colorObj.setNamedColor(color)
+        pen.setColor(colorObj)
+        pen.setWidth(size)
+        qp.setPen(pen)
+        qp.drawLine(start_x, start_y, end_x, end_y)
+        qp.end()
+
+    # def drawRect(self, qp):
+    #     qp.setPen(QPen(Qt.red, 2, Qt.SolidLine))
+    #     qp.drawRect(200, 200, 400, 400)
+    #
+    # def drawEllipse(self, qp):  ########椭圆，圆
+    #     qp.setPen(QPen(Qt.blue, 2, Qt.SolidLine))
+    #     qp.drawEllipse(100, 200, 300, 300)
+
+
+def show_all():
+    pass
 
 
 app = QtGui.QApplication(sys.argv)
 icon = CanvasWidget()
 icon.show()
+timer = QtCore.QTimer()
+timer.setInterval(1000)
+timer.start()
+# QWidget.update() 通过立即调用paintEvent()来直接重新绘制窗口部件
+QtCore.QObject.connect(timer, QtCore.SIGNAL("timeout()"), icon, QtCore.SLOT("update()"))
 sys.exit(app.exec_())
