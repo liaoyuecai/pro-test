@@ -7,14 +7,14 @@ toolbar, statusbar and a central widget.
 """
 
 import sys
-from PyQt4 import QtGui
+from PyQt4 import QtGui,QtCore
 
 
 class Example(QtGui.QMainWindow):
 
     def __init__(self):
         super(Example, self).__init__()
-
+        QtCore.QTextCodec.setCodecForCStrings(QtCore.QTextCodec.codecForName("utf-8"))
         self.initUI()
 
     def initUI(self):
@@ -29,6 +29,8 @@ class Example(QtGui.QMainWindow):
         self.statusBar()
 
         menubar = self.menuBar()
+        fileMenu = menubar.addMenu('开始')
+
         fileMenu = menubar.addMenu('&File')
         fileMenu.addAction(exitAction)
 
