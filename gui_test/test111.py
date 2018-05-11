@@ -8,6 +8,16 @@ from PyQt4.QtGui import *
 list = [];
 
 
+class Rectangle(object):
+    startX = None
+    startY = None
+    endX = None
+    endY = None
+
+    def __init__(self):
+        super(Rectangle, self).__init__()
+
+
 class pic(object):
     x = 0;
     y = 0;
@@ -24,9 +34,11 @@ class pic(object):
         self.img = image
 
 
-class CanvasWidget(QtGui.QMainWindow):
+class CanvasWidget(QtGui.QWidget):
     x = 0
     y = 0
+    mouseStatus = False
+    rectangle = None
 
     def __init__(self):
         super(CanvasWidget, self).__init__()
@@ -76,6 +88,9 @@ class CanvasWidget(QtGui.QMainWindow):
         colorObj = QtGui.QColor()
         colorObj.setNamedColor('#000000')
         pen.setColor(colorObj)
+        if self.rectangle:
+            # self.drawRect(wordpad)
+            self.drawBorder(wordpad)
 
         # 解决中文乱码问题
         # QtCore.QTextCodec.setCodecForTr(QtCore.QTextCodec.codecForName("utf-8"))
@@ -99,23 +114,34 @@ class CanvasWidget(QtGui.QMainWindow):
         self.x += 1
         self.y += 1
 
+    startX = None
+    startY = None
+
     def mousePressEvent(self, event):
+        self.mouseStatus = True
+        self.rectangle = Rectangle()
+        self.rectangle.startX = event.x()
+        self.rectangle.startY = event.y()
         # image = QtGui.QImage()
         # image.load('3.bmp')
         # list[0].eraseRect(50, 50, 50, 50)
         # list[0].drawImage(50, 50, image, 0, 0, 50, 50)
-        button = event.button()
-        if button == 1:
-            print('点击左键')
-            self.drawPoints(event.globalX(), event.globalY(), '#000000', 1)
-        elif button == 2:
-            print('点击右键')
+        # button = event.button()
+        # if button == 1:
+        #     print('点击左键')
+        #     # self.drawPoints(event.globalX(), event.globalY(), '#000000', 1)
+        # elif button == 2:
+        #     print('点击右键')
 
     def mouseMoveEvent(self, event):
-        pass
+        if self.mouseStatus:
+            self.rectangle.endX = event.x()
+            self.rectangle.endY = event.y()
+            self.update()
 
     def mouseReleaseEvent(self, event):
-        pass
+        self.mouseStatus = False
+        self.update()
 
     def wheelEvent(self, event):
         # -120向上 120向下
@@ -150,9 +176,28 @@ class CanvasWidget(QtGui.QMainWindow):
         qp.drawLine(start_x, start_y, end_x, end_y)
         qp.end()
 
-    # def drawRect(self, qp):
-    #     qp.setPen(QPen(Qt.red, 2, Qt.SolidLine))
-    #     qp.drawRect(200, 200, 400, 400)
+    def drawBorder(self, qp):  #######画线
+        intervalX = self.rectangle.endX - self.rectangle.startX
+        intervalY = self.rectangle.endY - self.rectangle.startY
+        interval_x = intervalX * 0.2
+        interval_y = intervalY * 0.2
+        qp.setPen(QPen(Qt.red, 2, Qt.SolidLine))
+        qp.drawRoundRect(self.rectangle.startX, self.rectangle.startY, self.rectangle.endX, self.rectangle.endY,50,50)
+        # qp.drawLine(self.rectangle.startX + interval_x, self.rectangle.startY, self.rectangle.endX - interval_x,
+        #             self.rectangle.startY)
+        # qp.drawLine(self.rectangle.startX + interval_x, self.rectangle.endY, self.rectangle.endX - interval_x,
+        #             self.rectangle.endY)
+        # qp.drawLine(self.rectangle.startX, self.rectangle.startY + interval_y, self.rectangle.startX,
+        #             self.rectangle.endY - interval_y)
+        # qp.drawLine(self.rectangle.endX, self.rectangle.startY + interval_y, self.rectangle.endX,
+        #             self.rectangle.endY - interval_y)
+        # qp.drawArc(self.rectangle.startX - 2*interval_x, self.rectangle.startY - 2*interval_y, interval_x, interval_y, 1440,
+        #            1440)
+
+    def drawRect(self, qp):
+        qp.setPen(QPen(Qt.red, 2, Qt.SolidLine))
+        qp.drawRect(self.rectangle.startX, self.rectangle.startY, self.rectangle.endX - self.rectangle.startX,
+                    self.rectangle.endY - self.rectangle.startY)
     #
     # def drawEllipse(self, qp):  ########椭圆，圆
     #     qp.setPen(QPen(Qt.blue, 2, Qt.SolidLine))
@@ -170,5 +215,5 @@ timer = QtCore.QTimer()
 timer.setInterval(1000)
 timer.start()
 # QWidget.update() 通过立即调用paintEvent()来直接重新绘制窗口部件
-QtCore.QObject.connect(timer, QtCore.SIGNAL("timeout()"), icon, QtCore.SLOT("update()"))
+# QtCore.QObject.connect(timer, QtCore.SIGNAL("timeout()"), icon, QtCore.SLOT("update()"))
 sys.exit(app.exec_())
