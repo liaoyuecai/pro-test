@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
 
+from PyQt4.QtGui import *
+from PyQt4.QtCore import *
+
+
 class Object(object):
-    list = []
 
     def __init__(self, name=None):
         super(Object, self).__init__()
         self._name = name
+        self.list = []
 
     @property
     def sequence(self):
@@ -47,8 +51,6 @@ class GameData(Object):
 
     def __init__(self):
         super(GameData, self).__init__()
-        timerShaftName = '未命名' + bytes(self.seq)
-        self.list.append(TimerShaft(timerShaftName))
 
     def addChild(self, childName=None):
         if childName:
@@ -103,9 +105,26 @@ class Coverage(Object):
     def background(self, background):
         self._background = background
 
+    def choseActive(self, point):
+        active = None
+        for chlid in self.list:
+            active = chlid.choseActive(point)
+            if active:
+                return active
+        active = self
+        return active
+
+    def mouseRight(self, win, event):
+        contextMenu = QMenu(win)
+        actionA = contextMenu.addAction(u'动作A')
+        actionB = contextMenu.addAction(u'动作B')
+        actionC = contextMenu.addAction(u'动作C')
+        contextMenu.move(event.globalPos())
+        contextMenu.show()
+
 
 class Element(Object):
-    def __init__(self, x, y, width, high, name):
+    def __init__(self, x, y, width, high, name, data):
         super(Element, self).__init__()
         self._x = x
         self._y = y
@@ -114,6 +133,25 @@ class Element(Object):
         self._width = width
         self._high = high
         self._name = name
+        self.data = data
+
+    def _show(self, widget):
+        brush = QPainter()
+        brush.begin(widget)
+        brush.scale(self.scalaX, self.scalaY)
+        image = QImage()
+        image.loadFromData(self.data)
+        brush.drawImage(self.x, self.y, image, 0, 0, self.width, self.high)
+        brush.end()
+
+    def choseActive(self, point):
+        if self.x <= point.x() <= self.x + self.width and self.y <= point.y() <= self.y + self.high:
+            return self
+        else:
+            return None
+
+    def mouseRight(self, win, event):
+        pass
 
     @property
     def x(self):
@@ -149,3 +187,4 @@ class Element(Object):
 
 
 gameData = GameData()
+gameData.addChild()
