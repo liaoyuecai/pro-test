@@ -14,5 +14,11 @@ class Scenario(object):
         self.scenes.append(scene)
         return scene
 
+    def insertScene(self, current, name):
+        index = self.scenes.index(current)
+        scene = Scene(name)
+        self.scenes.insert(index, scene)
+        return scene
+
     def getScenes(self, seq):
         return self.scenes[seq]

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from PyQt4.QtGui import *
+from PyQt4.QtCore import *
 
 
 class Region(object):
@@ -43,15 +44,19 @@ class Region(object):
         self._scaleY = (point.y() - self._y) / self._height
 
     # 鼠标点击
-    def click(self, point):
-        if self._x <= point.x() <= (self._x + self.width) and self._y <= point.y() <= (self._y + self.height):
-            return self
+    def click(self, point, select):
+        if select:
+            if self._x <= point.x() <= (self._x + self.width) and self._y <= point.y() <= (self._y + self.height):
+                # 选中
+                self._selected = True
+                return self
+            else:
+                # 取消选中
+                self._selected = False
+                return None
         else:
+            self._selected = False
             return None
-
-    # 选中
-    def select(self):
-        self._selected = True
 
     # 右键菜单
     def menu(self, point):
@@ -82,21 +87,31 @@ class Region(object):
 
 
 class Picture(Region):
-    def __init__(self, img):
+    def __init__(self, url):
         super(Picture, self).__init__()
-        self.image = QImage()
-        self.image.load(img)
-        size = self.image.size()
-        self._width = size.width()
-        self._height = size.height()
+        self._url = url
         self.sx = 0
         self.sy = 0
+        self._width = -1
+        self._height = -1
 
     def draw(self, p):
         p.save()
+        p.eraseRect(self._x, self._y, self.width, self.height)
         # p.translate(self.x, self.y)
         # p.setOpacity(self.alpha * p.opacity())
         # p.rotate(self.rotation)
+        image = QImage()
+        image.load(self._url)
+        # image.save(self._url)
+        self._width = image.width()
+        self._height = image.height()
         p.scale(self._scaleX, self._scaleY)
-        p.drawImage(self._x, self._y, self.image, self.sx, self.sy, self.width, self.height)
+        p.drawImage(self._x, self._y, image, self.sx, self.sy, self.width, self.height)
+        self.drawBorder(p)
         p.restore()
+
+    def drawBorder(self, p):
+        if self._selected:
+            p.setPen(QPen(Qt.gray, 1, Qt.DashLine))
+            p.drawRect(self._x - 1, self._y - 1, self.width + 2, self.height + 2)

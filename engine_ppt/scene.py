@@ -9,8 +9,8 @@ class Scene(object):
         self.regions = []
         self._name = name
 
-    def addPicture(self, img):
-        pic = Picture(img)
+    def addPicture(self, url):
+        pic = Picture(url)
         self.regions.append(pic)
 
     def getRegions(self):
@@ -18,17 +18,20 @@ class Scene(object):
 
     # 查找选中元素,没有则选中的是当前场景
     def findSelect(self, point):
-        region = self
+        re = self
+        select = True
         # 倒序循环
         for r in reversed(self.regions):
-            region = r.click(point)
+            region = r.click(point, select)
             if region:
-                region.select()
-                break
-        return region
+                re = region
+                self.regions.remove(region)
+                self.regions.append(region)
+                select = False
+        return re
 
-    def click(self, point):
-        pass
+    # def click(self, point):
+    #     pass
 
     def menu(self):
         pass

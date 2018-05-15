@@ -68,7 +68,7 @@ class CanvasWidget(QtGui.QWidget):
         # （sx，sy）缩放坐标系。
         # canvas.scale(1, 1)
         image = QtGui.QImage()
-        f = open('2.bmp', "rb")
+        f = open('3.jpg', "rb")
         data = f.read()
         f.close()
         image.loadFromData(data)
