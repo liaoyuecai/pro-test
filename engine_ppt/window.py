@@ -15,6 +15,8 @@ class Window(QMainWindow):
         self.toolbar = None
         self.editer = None
         self.data_directory = None
+        self.scenarioCombo = None
+        self.sceneCombo = None
 
     def init(self):
         self.setGeometry(0, 0, 400, 200)
@@ -24,7 +26,6 @@ class Window(QMainWindow):
         self.move((screen.width() - size.width()) / 2, (screen.height() - size.height()) / 2)
         self.initMenu()
         self.initToolBar()
-        # self.initBody()
         self.show()
 
     def initMenu(self):
@@ -37,24 +38,75 @@ class Window(QMainWindow):
     def initToolBar(self):
         self.toolbar = self.addToolBar('tool')
 
-    def initBody(self):
+    def perfectMenu(self):
         insertMenu = self.menu.addMenu('插入')
+        insertMenu.addAction('插入世界线', self.toInsertScenario)
         insertMenu.addAction('插入图片', self.insertPic)
+
+    def toInsertScenario(self):
+        box = DialogBox()
+        box.initInputBox(self.insertScenario, '输入世界线名称')
+
+    def insertScenario(self, box, name):
+        if name:
+            self.editer.insertScenarios(name)
+            self.scenarioCombo.addItem(name)
+            self.scenarioCombo.setCurrentIndex(self.scenarioCombo.count() - 1)
+            self.body.update()
+            box.close()
+        else:
+            warn = DialogBox()
+            warn.initWarnBox('请输入世界线名称')
+
+    def perfectToolBar(self):
         self.toolbar.addWidget(QLabel('世界线：'))
-        combo = QComboBox(self)
-        combo.addItem('1')
-        combo.addItem('2')
-        self.toolbar.addWidget(combo)
-        self.body = BodyQWidget(self.editer)
+        self.scenarioCombo = QComboBox(self)
+        self.scenarioCombo.setMinimumContentsLength(20)
+        for s in self.editer.scenarios:
+            self.scenarioCombo.addItem(s.name)
+        self.connect(self.scenarioCombo, SIGNAL('currentIndexChanged(int)'), self.changeScenario)
+        self.toolbar.addWidget(self.scenarioCombo)
+        self.sceneCombo = QComboBox(self)
+        self.sceneCombo.setMinimumContentsLength(20)
+        for s in self.editer.currentScenario.getScenes():
+            self.sceneCombo.addItem(s.name)
+        self.toolbar.addWidget(QLabel(' | 场景：'))
+        self.connect(self.sceneCombo, SIGNAL('currentIndexChanged(int)'), self.changeScene)
+        self.toolbar.addWidget(self.sceneCombo)
+
+    def toEditScenarioName(self):
+        box = DialogBox()
+        box.initInputBox(self.editScenarioName, '输入世界线名称')
+
+    def editScenarioName(self, box, name):
+        if name:
+            self.scenarioCombo.setItemText(self.scenarioCombo.currentIndex(), name)
+            self.editer.currentScenario.name = QString2PyString(name)
+        box.close()
+
+    def editSceneName(self, name):
+        self.currentScene.setItemText(self.currentScene.currentIndex(), name)
+        self.editer.currentScene.name = QString2PyString(name)
+
+    def changeScenario(self, seq):
+        self.editer.changeScenario(seq)
+        self.update()
+
+    def changeScene(self, seq):
+        self.editer.changeScene(seq)
+        self.update()
+
+    def initBody(self):
+        self.perfectMenu()
+        self.perfectToolBar()
+        self.body = BodyQWidget(self)
         self.setCentralWidget(self.body)
         self.body.show()
 
     def newPro(self):
         if self.data_directory:
-            grid = QGridLayout()
-            grid.addWidget(QLabel('是否放弃当前编辑?'))
-            box = DialogBox(grid, self.createPro)
-            box.show()
+            box = DialogBox()
+            box.initChoseBox(self.createPro, '是否放弃当前编辑?')
         else:
             self.createPro()
 
@@ -63,10 +115,9 @@ class Window(QMainWindow):
         if self.data_directory:
             path = self.data_directory + '/edit.ds'
             if not os.path.exists(path):
-                grid = QGridLayout()
-                grid.addWidget(QLabel('加载失败，edit.ds 文件不存在' ))
-                box = DialogBox(grid, self.createPro)
-                box.show()
+                self.data_directory = None
+                box = DialogBox()
+                box.initWarnBox('加载失败，edit.ds 文件不存在')
             else:
                 try:
                     file = open(path, 'rb')
@@ -75,10 +126,9 @@ class Window(QMainWindow):
                     self.initBody()
                     self.update()
                 except RuntimeError:
-                    grid = QGridLayout()
-                    grid.addWidget(QLabel('edit.ds 文件被破坏', ))
-                    box = DialogBox(grid, self.createPro)
-                    box.show()
+                    self.data_directory = None
+                    box = DialogBox()
+                    box.initWarnBox('edit.ds 文件被破坏')
 
     def createPro(self, box=None):
         self.data_directory = QFileDialog.getExistingDirectory(self, "选择文件夹", '')
@@ -110,40 +160,63 @@ class Window(QMainWindow):
 
 
 class DialogBox(QDialog):
-    def __init__(self, grid, call=None, title='警告', *args):
+    def __init__(self):
         super(DialogBox, self).__init__()
-        self.setWindowTitle(title)
-        buttonBox = QDialogButtonBox(parent=self)
-        # 设置为水平方向
-        buttonBox.setOrientation(Qt.Horizontal)
-        if call is None:
-            buttonBox.addButton('确定', 0)
-            buttonBox.accepted.connect(self.close)
-        else:
-            # 确定和取消两个按钮
-            buttonBox.addButton('确定', 0)
-            buttonBox.addButton('取消', 1)
-            # 确定
-            buttonBox.accepted.connect(lambda: call(self, *args))
-            # 取消
-            buttonBox.rejected.connect(self.close)
-        layout = QVBoxLayout()
-        layout.addLayout(grid)
-        layout.addWidget(buttonBox)
-        self.setLayout(layout)
+        self.buttonBox = QDialogButtonBox(parent=self)
+        self.buttonBox.setOrientation(Qt.Horizontal)
+        self.layout = QVBoxLayout()
+        self.grid = QGridLayout()
+        self.layout.addLayout(self.grid)
+        self.layout.addWidget(self.buttonBox)
+        self.setLayout(self.layout)
+
+    def initInputBox(self, call, info, *args):
+        self.setWindowTitle('请输入')
+        self.buttonBox.addButton('确定', 0)
+        self.buttonBox.addButton('取消', 1)
+        self.grid.addWidget(QLabel(info, parent=self), 0, 0, 1, 1)
+        input = QLineEdit(parent=self)
+        self.grid.addWidget(input, 0, 1, 1, 1)
+        self.buttonBox.accepted.connect(lambda: call(self, input.text(), *args))
+        self.buttonBox.rejected.connect(self.close)
+        self.show()
+
+    def initChoseBox(self, call, info, *args):
+        self.setWindowTitle('提示')
+        self.buttonBox.addButton('确定', 0)
+        self.buttonBox.addButton('取消', 1)
+        self.buttonBox.accepted.connect(lambda: call(self, *args))
+        self.buttonBox.rejected.connect(self.close)
+        self.grid.addWidget(QLabel(info, parent=self))
+        self.show()
+
+    def initWarnBox(self, warn):
+        self.setWindowTitle('警告')
+        # buttonBox = QDialogButtonBox(parent=self)
+        # # 设置为水平方向
+        # buttonBox.setOrientation(Qt.Horizontal)
+        self.buttonBox.addButton('确定', 0)
+        self.buttonBox.accepted.connect(lambda: self.close())
+        # grid = QGridLayout()
+        self.grid.addWidget(QLabel(warn, parent=self))
+        # layout = QVBoxLayout()
+        # layout.addLayout(grid)
+        # layout.addWidget(buttonBox)
+        # self.setLayout(layout)
+        self.show()
 
 
 class BodyQWidget(QWidget):
-    def __init__(self, editer):
+    def __init__(self, parent):
         super(BodyQWidget, self).__init__()
         self.mouse = None
         self.mouse_x = None
         self.mouse_y = None
         self.mouseRegion = None
-        self.editer = editer
+        self.parent = parent
 
     def paintEvent(self, event):
-        scene = self.editer.currentScene
+        scene = self.parent.editer.currentScene
         regions = scene.getRegions()
         painter = QPainter()
         painter.begin(self)
@@ -153,7 +226,7 @@ class BodyQWidget(QWidget):
 
     def mousePressEvent(self, event):
         button = event.button()
-        region = self.editer.currentScene.findSelect(event.pos())
+        region = self.parent.editer.currentScene.findSelect(event.pos())
         if button == Qt.LeftButton:
             if not isinstance(region, Scene):
                 self.update()
@@ -161,7 +234,10 @@ class BodyQWidget(QWidget):
                 self.mouse_x = event.x() - region.x
                 self.mouse_y = event.y() - region.y
         elif button == Qt.RightButton:
-            print('点击右键')
+            contextMenu = QMenu(self)
+            contextMenu.addAction('世界线重命名', self.parent.toEditScenarioName)
+            contextMenu.move(event.globalPos())
+            contextMenu.show()
         self.mouse = button
 
     def mouseMoveEvent(self, event):
@@ -179,10 +255,6 @@ def main():
     app = QApplication(sys.argv)
     win = Window()
     win.init()
-    timer = QTimer()
-    timer.setInterval(1000)
-    timer.start()
-    # QObject.connect(timer, SIGNAL("timeout()"), win, SLOT("update()"))
     sys.exit(app.exec_())
 
 

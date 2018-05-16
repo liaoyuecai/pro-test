@@ -4,8 +4,9 @@ from scene import *
 
 
 class Scenario(object):
-    def __init__(self):
+    def __init__(self, name):
         super(Scenario, self).__init__()
+        self._name = name
         self.scenes = []
         self.scenes.append(Scene('未命名'))
 
@@ -20,5 +21,16 @@ class Scenario(object):
         self.scenes.insert(index, scene)
         return scene
 
-    def getScenes(self, seq):
+    def getScene(self, seq):
         return self.scenes[seq]
+
+    def getScenes(self):
+        return self.scenes
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, name):
+        self._name = name
