@@ -18,6 +18,9 @@ class Editer(object):
         index = self._scenarios.index(self._currentScenario)
         scenarios = Scenario(name)
         self._scenarios.insert(index, scenarios)
+        self._currentScenario = scenarios
+        self._currentScene = self._currentScenario.getScene(0)
+        return index
 
     def insertScene(self, name):
         self._currentScenario.insertScene(self._currentScene, name)
@@ -31,6 +34,7 @@ class Editer(object):
 
     def changeScenario(self, seq):
         self._currentScenario = self._scenarios[seq]
+        self._currentScene = self._currentScenario.getScene(0)
 
     @property
     def scenarios(self):
@@ -41,7 +45,7 @@ class Editer(object):
         return self._currentScene
 
     def changeScene(self, seq):
-        self._currentScene = self._currentScene.getScene(seq)
+        self._currentScene = self._currentScenario.getScene(seq)
 
 
 def QString2PyString(s):

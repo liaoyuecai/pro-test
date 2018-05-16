@@ -16,6 +16,10 @@ class Scene(object):
     def getRegions(self):
         return self.regions
 
+    def draw(self, p):
+        for region in self.regions:
+            region.draw(p)
+
     # 查找选中元素,没有则选中的是当前场景
     def findSelect(self, point):
         re = self

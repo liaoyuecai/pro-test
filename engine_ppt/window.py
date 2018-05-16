@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import sys, os, shutil, cPickle
+import cPickle
+import os
+import shutil
+import sys
+
 from editer import *
 
 QTextCodec.setCodecForCStrings(QTextCodec.codecForName("utf-8"))
@@ -17,6 +21,7 @@ class Window(QMainWindow):
         self.data_directory = None
         self.scenarioCombo = None
         self.sceneCombo = None
+        self.insertMenu = None
 
     def init(self):
         self.setGeometry(0, 0, 400, 200)
@@ -39,19 +44,36 @@ class Window(QMainWindow):
         self.toolbar = self.addToolBar('tool')
 
     def perfectMenu(self):
-        insertMenu = self.menu.addMenu('插入')
-        insertMenu.addAction('插入世界线', self.toInsertScenario)
-        insertMenu.addAction('插入图片', self.insertPic)
+        if self.insertMenu is None:
+            self.insertMenu = self.menu.addMenu('插入')
+            self.insertMenu.addAction('插入世界线', self.toInsertScenario)
+            self.insertMenu.addAction('插入场景', self.toInsertScene)
+            self.insertMenu.addAction('插入图片', self.insertPic)
 
     def toInsertScenario(self):
         box = DialogBox()
         box.initInputBox(self.insertScenario, '输入世界线名称')
 
+    def toInsertScene(self):
+        box = DialogBox()
+        box.initInputBox(self.insertScene, '输入场景名称')
+
+    def insertScene(self, box, name):
+        if name:
+            self.editer.insertScene(name)
+            self.sceneCombo.addItem(name)
+            self.sceneCombo.setCurrentIndex(self.sceneCombo.count() - 1)
+            self.body.update()
+            box.close()
+        else:
+            warn = DialogBox()
+            warn.initWarnBox('请输入场景名称')
+
     def insertScenario(self, box, name):
         if name:
-            self.editer.insertScenarios(name)
-            self.scenarioCombo.addItem(name)
-            self.scenarioCombo.setCurrentIndex(self.scenarioCombo.count() - 1)
+            index = self.editer.insertScenarios(name)
+            self.scenarioCombo.insertItem(index, name)
+            self.scenarioCombo.setCurrentIndex(index)
             self.body.update()
             box.close()
         else:
@@ -59,24 +81,34 @@ class Window(QMainWindow):
             warn.initWarnBox('请输入世界线名称')
 
     def perfectToolBar(self):
+        self.toolbar.clear()
         self.toolbar.addWidget(QLabel('世界线：'))
         self.scenarioCombo = QComboBox(self)
         self.scenarioCombo.setMinimumContentsLength(20)
+        self.sceneCombo = QComboBox(self)
+        self.sceneCombo.setMinimumContentsLength(20)
         for s in self.editer.scenarios:
             self.scenarioCombo.addItem(s.name)
         self.connect(self.scenarioCombo, SIGNAL('currentIndexChanged(int)'), self.changeScenario)
         self.toolbar.addWidget(self.scenarioCombo)
-        self.sceneCombo = QComboBox(self)
-        self.sceneCombo.setMinimumContentsLength(20)
         for s in self.editer.currentScenario.getScenes():
             self.sceneCombo.addItem(s.name)
         self.toolbar.addWidget(QLabel(' | 场景：'))
         self.connect(self.sceneCombo, SIGNAL('currentIndexChanged(int)'), self.changeScene)
         self.toolbar.addWidget(self.sceneCombo)
 
+    def resetSceneCombo(self):
+        self.sceneCombo.clear()
+        for s in self.editer.currentScenario.getScenes():
+            self.sceneCombo.addItem(s.name)
+
     def toEditScenarioName(self):
         box = DialogBox()
         box.initInputBox(self.editScenarioName, '输入世界线名称')
+
+    def toEditSceneName(self):
+        box = DialogBox()
+        box.initInputBox(self.editSceneName, '输入场景名称')
 
     def editScenarioName(self, box, name):
         if name:
@@ -84,12 +116,15 @@ class Window(QMainWindow):
             self.editer.currentScenario.name = QString2PyString(name)
         box.close()
 
-    def editSceneName(self, name):
-        self.currentScene.setItemText(self.currentScene.currentIndex(), name)
-        self.editer.currentScene.name = QString2PyString(name)
+    def editSceneName(self, box, name):
+        if name:
+            self.sceneCombo.setItemText(self.sceneCombo.currentIndex(), name)
+            self.editer.currentScene.name = QString2PyString(name)
+        box.close()
 
     def changeScenario(self, seq):
         self.editer.changeScenario(seq)
+        self.resetSceneCombo()
         self.update()
 
     def changeScene(self, seq):
@@ -217,11 +252,9 @@ class BodyQWidget(QWidget):
 
     def paintEvent(self, event):
         scene = self.parent.editer.currentScene
-        regions = scene.getRegions()
         painter = QPainter()
         painter.begin(self)
-        for region in regions:
-            region.draw(painter)
+        scene.draw(painter)
         painter.end()
 
     def mousePressEvent(self, event):
@@ -236,6 +269,7 @@ class BodyQWidget(QWidget):
         elif button == Qt.RightButton:
             contextMenu = QMenu(self)
             contextMenu.addAction('世界线重命名', self.parent.toEditScenarioName)
+            contextMenu.addAction('场景重命名', self.parent.toEditSceneName)
             contextMenu.move(event.globalPos())
             contextMenu.show()
         self.mouse = button
@@ -255,6 +289,10 @@ def main():
     app = QApplication(sys.argv)
     win = Window()
     win.init()
+    timer = QTimer()
+    timer.setInterval(3000)
+    timer.start()
+    timer.timeout.connect(win.save)
     sys.exit(app.exec_())
 
 
