@@ -1,52 +1,26 @@
-# -*- coding: utf-8 -*-
-
-"""
-This program creates a skeleton of
-a classic GUI application with a menubar,
-toolbar, statusbar and a central widget.
-"""
-
+# -*- coding: UTF8 -*-
 import sys
-from PyQt4 import QtGui,QtCore
+from PyQt4 import QtGui
+from PyQt4.QtGui import *
+from PyQt4.QtCore import *
 
 
-class Example(QtGui.QMainWindow):
-
-    def __init__(self):
-        super(Example, self).__init__()
-        QtCore.QTextCodec.setCodecForCStrings(QtCore.QTextCodec.codecForName("utf-8"))
-        self.initUI()
-
-    def initUI(self):
-        textEdit = QtGui.QTextEdit()
-        self.setCentralWidget(textEdit)
-
-        exitAction = QtGui.QAction(QtGui.QIcon('3.bmp'), 'Exit', self)
-        exitAction.setShortcut('Ctrl+Q')
-        exitAction.setStatusTip('Exit application')
-        exitAction.triggered.connect(self.close)
-
-        self.statusBar()
-
-        menubar = self.menuBar()
-        fileMenu = menubar.addMenu('开始')
-
-        fileMenu = menubar.addMenu('&File')
-        fileMenu.addAction(exitAction)
-
-        toolbar = self.addToolBar('Exit')
-        toolbar.addAction(exitAction)
-
-        self.setGeometry(300, 300, 350, 250)
-        self.setWindowTitle('Main window')
-        self.show()
+class Icon(QtGui.QWidget):
+    def __init__(self, parent=None):
+        QtGui.QWidget.__init__(self, parent)
+        palette1 = QtGui.QPalette()
+        palette1.setColor(self.backgroundRole(), QColor(192, 253, 123))  # 设置背景颜色
+        # palette1.setBrush(self.backgroundRole(), QtGui.QBrush(QtGui.QPixmap('../../../Document/images/17_big.jpg')))   # 设置背景图片
+        self.setPalette(palette1)
+        self.setAutoFillBackground(True)  # 不设置也可以
+        self.setGeometry(300, 300, 250, 150)
+        self.setWindowTitle('Icon')
+        # self.setWindowIcon(QtGui.QIcon('../../../Document/images/firefox.png'))
+        mylayout = QVBoxLayout()
+        self.setLayout(mylayout)
 
 
-def main():
-    app = QtGui.QApplication(sys.argv)
-    ex = Example()
-    sys.exit(app.exec_())
-
-
-if __name__ == '__main__':
-    main()
+app = QtGui.QApplication(sys.argv)
+icon = Icon()
+icon.show()
+sys.exit(app.exec_())

@@ -227,17 +227,9 @@ class DialogBox(QDialog):
 
     def initWarnBox(self, warn):
         self.setWindowTitle('警告')
-        # buttonBox = QDialogButtonBox(parent=self)
-        # # 设置为水平方向
-        # buttonBox.setOrientation(Qt.Horizontal)
         self.buttonBox.addButton('确定', 0)
         self.buttonBox.accepted.connect(lambda: self.close())
-        # grid = QGridLayout()
         self.grid.addWidget(QLabel(warn, parent=self))
-        # layout = QVBoxLayout()
-        # layout.addLayout(grid)
-        # layout.addWidget(buttonBox)
-        # self.setLayout(layout)
         self.show()
 
 

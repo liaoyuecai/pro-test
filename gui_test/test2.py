@@ -18,6 +18,11 @@ class Icon(QtGui.QWidget):
         self.setWindowTitle('Icon')
         mylayout = QVBoxLayout()
         self.setLayout(mylayout)
+        palette1 = QtGui.QPalette()
+        self.setAutoFillBackground(True)
+        palette1.setColor(self.backgroundRole(), QColor(192, 253, 123))  # 设置背景颜色
+        self.setPalette(palette1)
+        # self.setBackgroundRole()
 
     def keyPressEvent(self, e):
         if e.key() == QtCore.Qt.Key_Escape:
@@ -25,9 +30,10 @@ class Icon(QtGui.QWidget):
 
     def paintEvent(self, event):
         palette1 = QtGui.QPalette()
+        self.setAutoFillBackground(True)
         palette1.setColor(self.backgroundRole(), QColor(192, 253, 123))  # 设置背景颜色
-        palette1.setBrush(self.backgroundRole(), QtGui.QBrush(QtGui.QPixmap('1.bmp')))  # 设置背景图片
-        self.setPalette(palette1)
+        # palette1.setBrush(self.backgroundRole(), QtGui.QBrush(QtGui.QPixmap('1.bmp')))  # 设置背景图片
+        # self.setPalette(palette1)
 
 
 app = QtGui.QApplication(sys.argv)
