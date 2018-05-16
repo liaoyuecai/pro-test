@@ -137,6 +137,8 @@ class Window(QMainWindow):
         self.body = BodyQWidget(self)
         self.setCentralWidget(self.body)
         self.body.show()
+        print(self.body.width())
+        print(self.body.height())
 
     def newPro(self):
         if self.data_directory:
@@ -192,6 +194,11 @@ class Window(QMainWindow):
             self.editer.insertPic(path)
             self.editer.fileSeq += 1
             self.body.update()
+
+    def resizeEvent(self, event):
+        print(event.size().width())
+        print(event.size().height())
+        print()
 
 
 class DialogBox(QDialog):
