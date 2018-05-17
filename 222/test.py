@@ -21,6 +21,9 @@ class Window(QWidget):
         self.scene.move(self.scene.x - 1, self.scene.y - 1)
         self.update()
 
+    def keyPressEvent(self, event):
+        print(event.key())
+
 
 def main():
     app = QApplication(sys.argv)

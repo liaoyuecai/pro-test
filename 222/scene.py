@@ -92,6 +92,10 @@ class Scene(Role):
         super(Scene, self).__init__(width=parent.width(), height=parent.height())
         self._background = None
         self._scale = False
+        self._staticDict = {}
+        self._dynamicDict = {}
+        self._staticList = []
+        self._dynamicList = []
 
     def setEnableScale(self, scale):
         self._scale = scale
@@ -115,6 +119,10 @@ class Scene(Role):
                     p.scale(self._scaleX, self._scaleY)
                 p.drawImage(self._x, self._y, image, self._sx, self._sy)
                 p.restore()
+            for s in self._staticList:
+                s.draw(p)
+            for s in self._staticList:
+                s.draw(p)
 
 
 class Picture(Role):
