@@ -35,14 +35,16 @@ class pic(object):
 
 
 class CanvasWidget(QtGui.QWidget):
-    x = 0
-    y = 0
+    x = 50
+    y = 50
     mouseStatus = False
     rectangle = None
 
     def __init__(self):
         super(CanvasWidget, self).__init__()
         self.setMouseTracking(True)
+        self.t = 0
+
         # self.statusBar().showMessage('Ready')
 
     def paintEvent(self, event):
@@ -67,61 +69,77 @@ class CanvasWidget(QtGui.QWidget):
         # canvas.rotate()
         # （sx，sy）缩放坐标系。
         # canvas.scale(1, 1)
+
+        # pix = QPixmap()
+        # pix.load('jpg.png')
+        # canvas.translate(pix.width()/2, pix.height()/2)
+        # #
+        # canvas.rotate(self.t)
+        # canvas.translate(-pix.width()/2, -pix.height()/2)
+        # canvas.drawPixmap(0, 0, pix)
+
         image = QtGui.QImage()
-        f = open('3.jpg', "rb")
+        f = open('jpg.png', "rb")
         data = f.read()
         f.close()
         image.loadFromData(data)
+        canvas.translate(image.width()/2, image.height()/2)
         # image.load('2.bmp')
         # 旋转
-        canvas.rotate(30)
+        canvas.rotate(self.t)
+        canvas.translate(-image.width()/2, -image.height()/2)
+        # print(canvas.boundingRect().x())
         # （x，y）指定要绘制的绘画设备中的左上角点。（sx，sy）指定要绘制的图像中的左上角点。默认值是（0，0）。（sw，sh）指定要绘制的图像的大小。默认值（0，0）（和负值）表示一直到图像的右下角。
-        canvas.drawImage(self.x, self.y, image, 0, 0, 100, 100)
+        canvas.drawImage(0, 0, image, 0, 0, 100, 100)
+
+
         # 结束绘画。释放绘画时使用的任何资源。因为它被析构函数调用，所以通常不需要调用它。
         # self.update()
         # canvas.end()
-
-        wordpad = QtGui.QPainter()
-        # 开始写字
-        wordpad.begin(icon)
-        pen = QtGui.QPen()
-        colorObj = QtGui.QColor()
-        colorObj.setNamedColor('#000000')
-        pen.setColor(colorObj)
-        if self.rectangle:
-            # self.drawRect(wordpad)
-            self.drawBorder(wordpad)
-
-        # 解决中文乱码问题
-        # QtCore.QTextCodec.setCodecForTr(QtCore.QTextCodec.codecForName("utf-8"))
-        QtCore.QTextCodec.setCodecForCStrings(QtCore.QTextCodec.codecForName("utf-8"))
-        # QtCore.QTextCodec.setCodecForLocale(QtCore.QTextCodec.codecForName("utf-8"))
-        font = QtGui.QFont()
-        # 字体
-        font.setFamily("Arial")
-        font.setPixelSize(15)
-        # font.setWeight(QtGui.QFont.Normal)
-        # font.setWeight(QtGui.QFont.Bold)
-        # font.setWeight(QtGui.QFont.Black)
-        font.setWeight(QtGui.QFont.Light)
-        font.setItalic(False)
-        wordpad.setFont(font)
-        wordpad.setPen(pen)
-        # (x,y)左上角坐标,(x,y)宽 高
-        wordpad.drawText(10, 10, 150, 50, QtCore.Qt.AlignCenter, 'aadds')
-        # 结束写字
-        wordpad.end()
-        self.x += 1
-        self.y += 1
+        #
+        # wordpad = QtGui.QPainter()
+        # # 开始写字
+        # wordpad.begin(icon)
+        # pen = QtGui.QPen()
+        # colorObj = QtGui.QColor()
+        # colorObj.setNamedColor('#000000')
+        # pen.setColor(colorObj)
+        # if self.rectangle:
+        #     # self.drawRect(wordpad)
+        #     self.drawBorder(wordpad)
+        #
+        # # 解决中文乱码问题
+        # # QtCore.QTextCodec.setCodecForTr(QtCore.QTextCodec.codecForName("utf-8"))
+        # QtCore.QTextCodec.setCodecForCStrings(QtCore.QTextCodec.codecForName("utf-8"))
+        # # QtCore.QTextCodec.setCodecForLocale(QtCore.QTextCodec.codecForName("utf-8"))
+        # font = QtGui.QFont()
+        # # 字体
+        # font.setFamily("Arial")
+        # font.setPixelSize(15)
+        # # font.setWeight(QtGui.QFont.Normal)
+        # # font.setWeight(QtGui.QFont.Bold)
+        # # font.setWeight(QtGui.QFont.Black)
+        # font.setWeight(QtGui.QFont.Light)
+        # font.setItalic(False)
+        # wordpad.setFont(font)
+        # wordpad.setPen(pen)
+        # wordpad.rotate(self.t)
+        # # (x,y)左上角坐标,(x,y)宽 高
+        # wordpad.drawText(10, 10, 150, 50, Qt.AlignCenter, 'aadds')
+        # # 结束写字
+        # wordpad.end()
+        # self.x += 1
+        # self.y += 1
 
     startX = None
     startY = None
 
     def mousePressEvent(self, event):
-        self.mouseStatus = True
-        self.rectangle = Rectangle()
-        self.rectangle.startX = event.x()
-        self.rectangle.startY = event.y()
+        self.t += 10
+        # self.mouseStatus = True
+        # self.rectangle = Rectangle()
+        # self.rectangle.startX = event.x()
+        # self.rectangle.startY = event.y()
         # image = QtGui.QImage()
         # image.load('3.bmp')
         # list[0].eraseRect(50, 50, 50, 50)
@@ -182,7 +200,7 @@ class CanvasWidget(QtGui.QWidget):
         interval_x = intervalX * 0.2
         interval_y = intervalY * 0.2
         qp.setPen(QPen(Qt.red, 2, Qt.SolidLine))
-        qp.drawRoundRect(self.rectangle.startX, self.rectangle.startY, self.rectangle.endX, self.rectangle.endY,50,50)
+        qp.drawRoundRect(self.rectangle.startX, self.rectangle.startY, self.rectangle.endX, self.rectangle.endY, 50, 50)
         # qp.drawLine(self.rectangle.startX + interval_x, self.rectangle.startY, self.rectangle.endX - interval_x,
         #             self.rectangle.startY)
         # qp.drawLine(self.rectangle.startX + interval_x, self.rectangle.endY, self.rectangle.endX - interval_x,
