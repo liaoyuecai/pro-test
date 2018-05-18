@@ -7,9 +7,10 @@ class Window(QWidget):
     def __init__(self):
         super(Window, self).__init__()
         self.setFixedSize(100, 100)
-        self.scene = Scene(self)
-        self.scene.setBackground('3.jpg')
-        self.scene.setEnableScale(True)
+        self.scene = Scene('test',self)
+        self.scene.addDynamic(Role(2,'11','pic.png',10,20))
+        # self.scene.setBackground('3.jpg')
+        # self.scene.setEnableScale(True)
 
     def paintEvent(self, event):
         painter = QPainter()
