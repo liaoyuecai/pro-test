@@ -234,16 +234,16 @@ class Role(DynamicPic):
         self.rightPointer = 0
 
     def addUpPoint(self, point):
-        self.upPointer.append(point)
+        self.upPoints.append(point)
 
     def addDownPoint(self, point):
-        self.downPointer.append(point)
+        self.downPoints.append(point)
 
     def addLeftPoint(self, point):
-        self.leftPointer.append(point)
+        self.leftPoints.append(point)
 
     def addRightPoint(self, point):
-        self.rightPointer.append(point)
+        self.rightPoints.append(point)
 
     def resetStepSize(self, stepSize):
         self.stepSize = stepSize
@@ -284,14 +284,4 @@ class Role(DynamicPic):
             self._sx = self.rightPoints[self.rightPointer].x
             self._sy = self.rightPoints[self.rightPointer].y
             self.rightPointer += 1
-        self._y += self.stepSize
-
-    def goDown(self):
-        self._y += self.stepSize
-
-    def goLeft(self):
-        if self._x >= self.stepSize:
-            self._x -= self.stepSize
-
-    def goRight(self):
         self._x += self.stepSize
