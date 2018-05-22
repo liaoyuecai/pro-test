@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import warnings
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
@@ -49,7 +48,7 @@ class Area(object):
 
 
 class Element(Area):
-    def __init__(self, name, x=0, y=0, width=0, height=0):
+    def __init__(self, name, parent=None, x=0, y=0, width=0, height=0):
         super(Element, self).__init__(x, y, width, height)
         self._name = name
         self._sx = 0
@@ -58,7 +57,22 @@ class Element(Area):
         self._scaleY = 1
         self._rotation = 0
         self._opacity = 1
+        self.parent = parent
         self._selected = False
+        self._childDict = {}
+        self._childList = []
+
+    def addChild(self, s):
+        s.bindScene(self)
+        self._childList.append(s)
+        self._childDict[s.name] = self._childList.index(s)
+
+    def getChild(self, name):
+        return self._childDict[name]
+
+    @property
+    def childList(self):
+        return self._childList
 
     def isIn(self, point):
         if self._x <= point.x() <= (self._x + self.width) and self._y <= point.y() <= (self._y + self.height):
@@ -132,18 +146,6 @@ class Scene(Element):
         super(Scene, self).__init__(name=name, width=parent.width(), height=parent.height())
         self._background = None
         self._scale = False
-        self._staticDict = {}
-        self._dynamicDict = {}
-        self._staticList = []
-        self._dynamicList = []
-
-    def addStatic(self, s):
-        self._staticList.append(s)
-        self._staticDict[s.name] = self._staticList.index(s)
-
-    def addDynamic(self, d):
-        self._dynamicList.append(d)
-        self._dynamicDict[d.name] = self._dynamicList.index(d)
 
     def setEnableScale(self, scale):
         self._scale = scale
@@ -204,14 +206,31 @@ class Map(Scene):
         return None
 
 
-class Picture(Element):
-    def __init__(self, name, url, width=0, height=0):
-        super(Picture, self).__init__(name)
+class Item(Element):
+    def __init__(self, parent, name):
+        super(Picture, self).__init__(name, parent=parent)
+        self.disable = False
+
+    def setDisable(self, flag):
+        self.disable = flag
+
+    def getScene(self):
+        if self.parent is None:
+            return self
+        else:
+            return self.getScene()
+
+
+class Picture(Item):
+    def __init__(self, parent, name, url, width=0, height=0):
+        super(Picture, self).__init__(parent, name)
         self._url = url
         self._width = width
         self._height = height
 
     def draw(self, p):
+        if self.disable:
+            return
         if self._url:
             image = QImage()
             image.load(self._url)
@@ -233,13 +252,17 @@ class Picture(Element):
 
 
 class Door(Picture):
-    def __init__(self, name, goto, width, height, url=None):
-        super(Door, self).__init__(name, url, width, height)
+    enter = pyqtSignal(name='enter')
+
+    def __init__(self, parent, name, exitPoint, goto, width, height, url=None):
+        super(Door, self).__init__(name, parent, url, width, height)
         self._goto = goto
+        self.exitPoint = exitPoint
 
     def isEnter(self, r):
         if self._x <= r.x and r.x + r.width <= (self._x + self.width) and self._y <= r.y and r.y + r.height <= (
                 self._y + self.height):
+            self.enter.emit()
             return True
         else:
             return False
@@ -247,6 +270,12 @@ class Door(Picture):
     @property
     def goto(self):
         return self._goto
+
+    def getExitPointX(self):
+        return self.exitPoint.x
+
+    def getExitPointY(self):
+        return self.exitPoint.y
 
 
 class Point(object):
@@ -269,8 +298,8 @@ class Point(object):
 
 
 class DynamicPic(Picture):
-    def __init__(self, name, url, width, height):
-        super(DynamicPic, self).__init__(name, url, width=width, height=height)
+    def __init__(self, parent, name, url, width, height):
+        super(DynamicPic, self).__init__(parent, name, url, width=width, height=height)
         self.movingScrolls = []
         self.scrollPointer = 0
         self.speed = 10
@@ -305,9 +334,8 @@ class DynamicPic(Picture):
 
 class Role(DynamicPic):
 
-    def __init__(self, stepSize, name, url, width, height):
-        super(Role, self).__init__(name, url, width, height)
-        self.scene = None
+    def __init__(self, parent, stepSize, name, url, width, height):
+        super(Role, self).__init__(parent, name, url, width, height)
         self.stepSize = stepSize
         self.upPoints = []
         self.downPoints = []
@@ -317,9 +345,6 @@ class Role(DynamicPic):
         self.downPointer = 0
         self.leftPointer = 0
         self.rightPointer = 0
-
-    def bindScene(self, scene):
-        self.scene = scene
 
     def addUpPoint(self, point):
         self.upPoints.append(point)
@@ -337,68 +362,56 @@ class Role(DynamicPic):
         self.stepSize = stepSize
 
     def goUp(self):
-        if self.scene is None:
-            warnings.warn('please bind scene')
-        else:
-            if len(self.upPoints) > 0:
-                if self.upPointer > len(self.upPoints) - 1:
-                    self.upPointer = 0
-                self._sx = self.upPoints[self.upPointer].x
-                self._sy = self.upPoints[self.upPointer].y
-                self.upPointer += 1
-            if self._y >= self.stepSize:
-                if self.scene.isIn(Point(self._x, self._y - self.stepSize)):
-                    self._y -= self.stepSize
+        if len(self.upPoints) > 0:
+            if self.upPointer > len(self.upPoints) - 1:
+                self.upPointer = 0
+            self._sx = self.upPoints[self.upPointer].x
+            self._sy = self.upPoints[self.upPointer].y
+            self.upPointer += 1
+        if self._y >= self.stepSize:
+            if self.getScene().isIn(Point(self._x, self._y - self.stepSize)):
+                self._y -= self.stepSize
+                self.checkEvent()
 
     def goDown(self):
-        if self.scene is None:
-            warnings.warn('please bind scene')
-        else:
-            if len(self.downPoints) > 0:
-                if self.downPointer > len(self.downPoints) - 1:
-                    self.downPointer = 0
-                self._sx = self.downPoints[self.downPointer].x
-                self._sy = self.downPoints[self.downPointer].y
-                self.downPointer += 1
-            if self._y + self.stepSize < self.scene.width:
-                if self.scene:
-                    if self.scene.isIn(Point(self._x, self._y + self.stepSize)):
-                        self._y += self.stepSize
-
-    def goLeft(self):
-        if self.scene is None:
-            warnings.warn('please bind scene')
-        else:
-            if len(self.leftPoints) > 0:
-                if self.leftPointer > len(self.leftPoints) - 1:
-                    self.leftPointer = 0
-                self._sx = self.leftPoints[self.leftPointer].x
-                self._sy = self.leftPoints[self.leftPointer].y
-                self.leftPointer += 1
-            if self._x >= self.stepSize:
-                if self.scene.isIn(Point(self._x - self.stepSize, self._y)):
-                    self._x -= self.stepSize
-
-    def goRight(self):
-        if self.scene is None:
-            warnings.warn('please bind scene')
-        else:
-            if len(self.rightPoints) > 0:
-                if self.rightPointer > len(self.rightPoints) - 1:
-                    self.rightPointer = 0
-                self._sx = self.rightPoints[self.rightPointer].x
-                self._sy = self.rightPoints[self.rightPointer].y
-                self.rightPointer += 1
-            if self._x + self.stepSize < self.scene.height:
-                if self.scene.isIn(Point(self._x + self.stepSize, self._y)):
-                    self._x += self.stepSize
+        if len(self.downPoints) > 0:
+            if self.downPointer > len(self.downPoints) - 1:
+                self.downPointer = 0
+            self._sx = self.downPoints[self.downPointer].x
+            self._sy = self.downPoints[self.downPointer].y
+            self.downPointer += 1
+        if self._y + self.stepSize < self.scene.width:
+            if self.scene:
+                if self.getScene().isIn(Point(self._x, self._y + self.stepSize)):
+                    self._y += self.stepSize
                     self.checkEvent()
 
+    def goLeft(self):
+        if len(self.leftPoints) > 0:
+            if self.leftPointer > len(self.leftPoints) - 1:
+                self.leftPointer = 0
+            self._sx = self.leftPoints[self.leftPointer].x
+            self._sy = self.leftPoints[self.leftPointer].y
+            self.leftPointer += 1
+        if self._x >= self.stepSize:
+            if self.getScene().isIn(Point(self._x - self.stepSize, self._y)):
+                self._x -= self.stepSize
+                self.checkEvent()
+
+    def goRight(self):
+        if len(self.rightPoints) > 0:
+            if self.rightPointer > len(self.rightPoints) - 1:
+                self.rightPointer = 0
+            self._sx = self.rightPoints[self.rightPointer].x
+            self._sy = self.rightPoints[self.rightPointer].y
+            self.rightPointer += 1
+        if self._x + self.stepSize < self.scene.height:
+            if self.getScene().isIn(Point(self._x + self.stepSize, self._y)):
+                self._x += self.stepSize
+                self.checkEvent()
 
     def checkEvent(self):
-        for e in self.scene._staticList:
+        for e in self.parent.childList:
             if isinstance(e, Door):
                 if e.isEnter(self):
-                    print('doooooooooooooooor')
                     break
-                    pass

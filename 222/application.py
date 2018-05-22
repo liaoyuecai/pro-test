@@ -40,6 +40,15 @@ class Application(QWidget):
         self.scenes.append(scene)
         self.scenesDict[scene.name] = self.scenes.index(scene)
 
+    def addDoor(self, name, door):
+        self.scenesDict[name].addChild(door)
+        door.enter.connect(lambda: self.enterDoor(door.goto, door))
+
+    def enterDoor(self, sceneName, door):
+        self.currentScene = self.scenesDict[sceneName]
+        self.protagonist.x = door.getExitPointX()
+        self.protagonist.y = door.getExitPointY()
+
     def keyReleaseEvent(self, event):
         if event.key() == Qt.Key_Left:
             self.role.goLeft()
